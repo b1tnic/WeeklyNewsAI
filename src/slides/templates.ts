@@ -235,46 +235,53 @@ export function createNewsSlideRequests(
           fields: 'fontSize,fontFamily,foregroundColor',
         },
       },
-      {
-        createShape: {
-          objectId: `${itemId}_desc`,
-          shapeType: 'TEXT_BOX',
-          elementProperties: {
-            pageObjectId: slideId,
-            size: {
-              width: { magnitude: 650, unit: 'PT' },
-              height: { magnitude: 30, unit: 'PT' },
-            },
-            transform: {
-              scaleX: 1,
-              scaleY: 1,
-              translateX: 30,
-              translateY: yOffset + 48,
-              unit: 'PT',
-            },
-          },
-        },
-      },
-      {
-        insertText: {
-          objectId: `${itemId}_desc`,
-          text:
-            article.description.slice(0, 120) +
-            (article.description.length > 120 ? '...' : ''),
-        },
-      },
-      {
-        updateTextStyle: {
-          objectId: `${itemId}_desc`,
-          style: {
-            fontSize: { magnitude: 11, unit: 'PT' },
-            fontFamily: 'Arial',
-            foregroundColor: { opaqueColor: { rgbColor: COLORS.secondary } },
-          },
-          fields: 'fontSize,fontFamily,foregroundColor',
-        },
-      }
     );
+
+    // Only add description if it exists
+    const descText = article.description?.trim();
+    if (descText) {
+      requests.push(
+        {
+          createShape: {
+            objectId: `${itemId}_desc`,
+            shapeType: 'TEXT_BOX',
+            elementProperties: {
+              pageObjectId: slideId,
+              size: {
+                width: { magnitude: 650, unit: 'PT' },
+                height: { magnitude: 30, unit: 'PT' },
+              },
+              transform: {
+                scaleX: 1,
+                scaleY: 1,
+                translateX: 30,
+                translateY: yOffset + 48,
+                unit: 'PT',
+              },
+            },
+          },
+        },
+        {
+          insertText: {
+            objectId: `${itemId}_desc`,
+            text:
+              descText.slice(0, 120) +
+              (descText.length > 120 ? '...' : ''),
+          },
+        },
+        {
+          updateTextStyle: {
+            objectId: `${itemId}_desc`,
+            style: {
+              fontSize: { magnitude: 11, unit: 'PT' },
+              fontFamily: 'Arial',
+              foregroundColor: { opaqueColor: { rgbColor: COLORS.secondary } },
+            },
+            fields: 'fontSize,fontFamily,foregroundColor',
+          },
+        }
+      );
+    }
   });
 
   return requests;
