@@ -4,10 +4,11 @@ import type { NewsArticle } from '../types.js';
 import { getAuthClient, getSlidesClient, getDriveClient } from './auth.js';
 import {
   createTitleSlideRequests,
-  createNewsSlideRequests,
+  createTocSlideRequests,
+  createDetailSlideRequests,
 } from './templates.js';
 
-const ARTICLES_PER_SLIDE = 5;
+const ARTICLES_PER_TOC_SLIDE = 8;
 
 interface SlidesConfig {
   serviceAccountEmail: string;
@@ -56,20 +57,27 @@ export async function createOrUpdatePresentation(
   // Build all slide requests
   const requests: slides_v1.Schema$Request[] = [];
 
-  // Title slide
+  // 1. Title slide
   requests.push(...createTitleSlideRequests('title_slide', dateRange));
 
-  // News slides (paginated)
-  const totalSlides = Math.ceil(articles.length / ARTICLES_PER_SLIDE);
-  for (let i = 0; i < totalSlides; i++) {
-    const slideArticles = articles.slice(
-      i * ARTICLES_PER_SLIDE,
-      (i + 1) * ARTICLES_PER_SLIDE
+  // 2. Table of contents slides
+  const totalTocSlides = Math.ceil(articles.length / ARTICLES_PER_TOC_SLIDE);
+  for (let i = 0; i < totalTocSlides; i++) {
+    const tocArticles = articles.slice(
+      i * ARTICLES_PER_TOC_SLIDE,
+      (i + 1) * ARTICLES_PER_TOC_SLIDE
     );
     requests.push(
-      ...createNewsSlideRequests(`news_slide_${i}`, slideArticles, i + 1)
+      ...createTocSlideRequests(`toc_slide_${i}`, tocArticles, i + 1)
     );
   }
+
+  // 3. Detail slides for each article (with AI summary)
+  articles.forEach((article, index) => {
+    requests.push(
+      ...createDetailSlideRequests(`detail_slide_${index}`, article, index + 1)
+    );
+  });
 
   // Apply all requests
   await slidesClient.presentations.batchUpdate({

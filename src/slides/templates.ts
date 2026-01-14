@@ -102,7 +102,8 @@ export function createTitleSlideRequests(
   ];
 }
 
-export function createNewsSlideRequests(
+// Table of contents slide - list of all articles
+export function createTocSlideRequests(
   slideId: string,
   articles: NewsArticle[],
   pageNumber: number
@@ -137,14 +138,14 @@ export function createNewsSlideRequests(
     {
       insertText: {
         objectId: `${slideId}_header`,
-        text: `今週のAIニュース (${pageNumber})`,
+        text: `今週のAIニュース一覧 (${pageNumber})`,
       },
     },
     {
       updateTextStyle: {
         objectId: `${slideId}_header`,
         style: {
-          fontSize: { magnitude: 28, unit: 'PT' },
+          fontSize: { magnitude: 24, unit: 'PT' },
           fontFamily: 'Arial',
           bold: true,
           foregroundColor: { opaqueColor: { rgbColor: COLORS.primary } },
@@ -155,7 +156,7 @@ export function createNewsSlideRequests(
   ];
 
   articles.forEach((article, index) => {
-    const yOffset = 80 + index * 85;
+    const yOffset = 70 + index * 45;
     const itemId = `${slideId}_item_${index}`;
 
     requests.push(
@@ -167,7 +168,7 @@ export function createNewsSlideRequests(
             pageObjectId: slideId,
             size: {
               width: { magnitude: 650, unit: 'PT' },
-              height: { magnitude: 30, unit: 'PT' },
+              height: { magnitude: 25, unit: 'PT' },
             },
             transform: {
               scaleX: 1,
@@ -182,14 +183,14 @@ export function createNewsSlideRequests(
       {
         insertText: {
           objectId: `${itemId}_title`,
-          text: article.title.slice(0, 80) + (article.title.length > 80 ? '...' : ''),
+          text: `${index + 1}. ${article.title.slice(0, 70)}${article.title.length > 70 ? '...' : ''}`,
         },
       },
       {
         updateTextStyle: {
           objectId: `${itemId}_title`,
           style: {
-            fontSize: { magnitude: 16, unit: 'PT' },
+            fontSize: { magnitude: 14, unit: 'PT' },
             fontFamily: 'Arial',
             bold: true,
             link: { url: article.url },
@@ -206,13 +207,13 @@ export function createNewsSlideRequests(
             pageObjectId: slideId,
             size: {
               width: { magnitude: 650, unit: 'PT' },
-              height: { magnitude: 20, unit: 'PT' },
+              height: { magnitude: 18, unit: 'PT' },
             },
             transform: {
               scaleX: 1,
               scaleY: 1,
-              translateX: 30,
-              translateY: yOffset + 28,
+              translateX: 45,
+              translateY: yOffset + 22,
               unit: 'PT',
             },
           },
@@ -228,61 +229,277 @@ export function createNewsSlideRequests(
         updateTextStyle: {
           objectId: `${itemId}_meta`,
           style: {
-            fontSize: { magnitude: 12, unit: 'PT' },
+            fontSize: { magnitude: 10, unit: 'PT' },
             fontFamily: 'Arial',
             foregroundColor: { opaqueColor: { rgbColor: COLORS.secondary } },
           },
           fields: 'fontSize,fontFamily,foregroundColor',
         },
-      },
+      }
     );
-
-    // Only add description if it exists
-    const descText = article.description?.trim();
-    if (descText) {
-      requests.push(
-        {
-          createShape: {
-            objectId: `${itemId}_desc`,
-            shapeType: 'TEXT_BOX',
-            elementProperties: {
-              pageObjectId: slideId,
-              size: {
-                width: { magnitude: 650, unit: 'PT' },
-                height: { magnitude: 30, unit: 'PT' },
-              },
-              transform: {
-                scaleX: 1,
-                scaleY: 1,
-                translateX: 30,
-                translateY: yOffset + 48,
-                unit: 'PT',
-              },
-            },
-          },
-        },
-        {
-          insertText: {
-            objectId: `${itemId}_desc`,
-            text:
-              descText.slice(0, 120) +
-              (descText.length > 120 ? '...' : ''),
-          },
-        },
-        {
-          updateTextStyle: {
-            objectId: `${itemId}_desc`,
-            style: {
-              fontSize: { magnitude: 11, unit: 'PT' },
-              fontFamily: 'Arial',
-              foregroundColor: { opaqueColor: { rgbColor: COLORS.secondary } },
-            },
-            fields: 'fontSize,fontFamily,foregroundColor',
-          },
-        }
-      );
-    }
   });
 
   return requests;
+}
+
+// Detail slide - one article per slide with full summary
+export function createDetailSlideRequests(
+  slideId: string,
+  article: NewsArticle,
+  articleNumber: number
+): Request[] {
+  const requests: Request[] = [
+    {
+      createSlide: {
+        objectId: slideId,
+        slideLayoutReference: { predefinedLayout: 'BLANK' },
+      },
+    },
+    // Article number badge
+    {
+      createShape: {
+        objectId: `${slideId}_badge`,
+        shapeType: 'TEXT_BOX',
+        elementProperties: {
+          pageObjectId: slideId,
+          size: {
+            width: { magnitude: 40, unit: 'PT' },
+            height: { magnitude: 30, unit: 'PT' },
+          },
+          transform: {
+            scaleX: 1,
+            scaleY: 1,
+            translateX: 30,
+            translateY: 25,
+            unit: 'PT',
+          },
+        },
+      },
+    },
+    {
+      insertText: {
+        objectId: `${slideId}_badge`,
+        text: `#${articleNumber}`,
+      },
+    },
+    {
+      updateTextStyle: {
+        objectId: `${slideId}_badge`,
+        style: {
+          fontSize: { magnitude: 14, unit: 'PT' },
+          fontFamily: 'Arial',
+          bold: true,
+          foregroundColor: { opaqueColor: { rgbColor: COLORS.secondary } },
+        },
+        fields: 'fontSize,fontFamily,bold,foregroundColor',
+      },
+    },
+    // Title
+    {
+      createShape: {
+        objectId: `${slideId}_title`,
+        shapeType: 'TEXT_BOX',
+        elementProperties: {
+          pageObjectId: slideId,
+          size: {
+            width: { magnitude: 650, unit: 'PT' },
+            height: { magnitude: 60, unit: 'PT' },
+          },
+          transform: {
+            scaleX: 1,
+            scaleY: 1,
+            translateX: 30,
+            translateY: 55,
+            unit: 'PT',
+          },
+        },
+      },
+    },
+    {
+      insertText: {
+        objectId: `${slideId}_title`,
+        text: article.title,
+      },
+    },
+    {
+      updateTextStyle: {
+        objectId: `${slideId}_title`,
+        style: {
+          fontSize: { magnitude: 22, unit: 'PT' },
+          fontFamily: 'Arial',
+          bold: true,
+          link: { url: article.url },
+          foregroundColor: { opaqueColor: { rgbColor: COLORS.primary } },
+        },
+        fields: 'fontSize,fontFamily,bold,link,foregroundColor',
+      },
+    },
+    // Meta info
+    {
+      createShape: {
+        objectId: `${slideId}_meta`,
+        shapeType: 'TEXT_BOX',
+        elementProperties: {
+          pageObjectId: slideId,
+          size: {
+            width: { magnitude: 650, unit: 'PT' },
+            height: { magnitude: 25, unit: 'PT' },
+          },
+          transform: {
+            scaleX: 1,
+            scaleY: 1,
+            translateX: 30,
+            translateY: 115,
+            unit: 'PT',
+          },
+        },
+      },
+    },
+    {
+      insertText: {
+        objectId: `${slideId}_meta`,
+        text: `📰 ${article.source}  |  📅 ${format(article.publishedAt, 'yyyy年MM月dd日')}`,
+      },
+    },
+    {
+      updateTextStyle: {
+        objectId: `${slideId}_meta`,
+        style: {
+          fontSize: { magnitude: 12, unit: 'PT' },
+          fontFamily: 'Arial',
+          foregroundColor: { opaqueColor: { rgbColor: COLORS.secondary } },
+        },
+        fields: 'fontSize,fontFamily,foregroundColor',
+      },
+    },
+    // Divider line
+    {
+      createShape: {
+        objectId: `${slideId}_divider`,
+        shapeType: 'RECTANGLE',
+        elementProperties: {
+          pageObjectId: slideId,
+          size: {
+            width: { magnitude: 650, unit: 'PT' },
+            height: { magnitude: 2, unit: 'PT' },
+          },
+          transform: {
+            scaleX: 1,
+            scaleY: 1,
+            translateX: 30,
+            translateY: 145,
+            unit: 'PT',
+          },
+        },
+      },
+    },
+    {
+      updateShapeProperties: {
+        objectId: `${slideId}_divider`,
+        shapeProperties: {
+          shapeBackgroundFill: {
+            solidFill: {
+              color: { rgbColor: COLORS.lightGray },
+            },
+          },
+          outline: { propertyState: 'NOT_RENDERED' },
+        },
+        fields: 'shapeBackgroundFill,outline',
+      },
+    },
+    // Summary header
+    {
+      createShape: {
+        objectId: `${slideId}_summary_header`,
+        shapeType: 'TEXT_BOX',
+        elementProperties: {
+          pageObjectId: slideId,
+          size: {
+            width: { magnitude: 100, unit: 'PT' },
+            height: { magnitude: 25, unit: 'PT' },
+          },
+          transform: {
+            scaleX: 1,
+            scaleY: 1,
+            translateX: 30,
+            translateY: 160,
+            unit: 'PT',
+          },
+        },
+      },
+    },
+    {
+      insertText: {
+        objectId: `${slideId}_summary_header`,
+        text: '📝 要約',
+      },
+    },
+    {
+      updateTextStyle: {
+        objectId: `${slideId}_summary_header`,
+        style: {
+          fontSize: { magnitude: 14, unit: 'PT' },
+          fontFamily: 'Arial',
+          bold: true,
+          foregroundColor: { opaqueColor: { rgbColor: COLORS.secondary } },
+        },
+        fields: 'fontSize,fontFamily,bold,foregroundColor',
+      },
+    },
+  ];
+
+  // Summary content
+  const summaryText = article.summary?.trim() || article.description?.trim();
+  if (summaryText) {
+    requests.push(
+      {
+        createShape: {
+          objectId: `${slideId}_summary`,
+          shapeType: 'TEXT_BOX',
+          elementProperties: {
+            pageObjectId: slideId,
+            size: {
+              width: { magnitude: 650, unit: 'PT' },
+              height: { magnitude: 200, unit: 'PT' },
+            },
+            transform: {
+              scaleX: 1,
+              scaleY: 1,
+              translateX: 30,
+              translateY: 190,
+              unit: 'PT',
+            },
+          },
+        },
+      },
+      {
+        insertText: {
+          objectId: `${slideId}_summary`,
+          text: summaryText.slice(0, 800),
+        },
+      },
+      {
+        updateTextStyle: {
+          objectId: `${slideId}_summary`,
+          style: {
+            fontSize: { magnitude: 14, unit: 'PT' },
+            fontFamily: 'Arial',
+            foregroundColor: { opaqueColor: { rgbColor: COLORS.secondary } },
+          },
+          fields: 'fontSize,fontFamily,foregroundColor',
+        },
+      }
+    );
+  }
+
+  return requests;
+}
+
+// Legacy function for backwards compatibility
+export function createNewsSlideRequests(
+  slideId: string,
+  articles: NewsArticle[],
+  pageNumber: number
+): Request[] {
+  return createTocSlideRequests(slideId, articles, pageNumber);
 }
